@@ -207,4 +207,106 @@ Glyph.prototype.drawMetrics = function (ctx, x, y, fontSize) {
     draw.line(ctx, x + (this.advanceWidth * scale), -10000, x + (this.advanceWidth * scale), 10000);
 };
 
+// Draw the glyph on the given SVG container element.
+//
+// parent - SVG container element to add path to
+// x - Horizontal position of the glyph. (default: 0)
+// y - Vertical position of the *baseline* of the glyph. (default: 0)
+// fontSize - Font size, in pixels (default: 72).
+Glyph.prototype.drawSVG = function (parent, x, y, fontSize) {
+    return this.getPath(x, y, fontSize).drawSVG(parent);
+};
+
+// Draw the points of the glyph.
+// On-curve points will be drawn in blue, off-curve points will be drawn in red.
+//
+// parent - SVG container element.
+// x - Horizontal position of the glyph. (default: 0)
+// y - Vertical position of the *baseline* of the glyph. (default: 0)
+// fontSize - Font size, in pixels (default: 72).
+Glyph.prototype.drawPointsSVG = function (parent, x, y, fontSize) {
+
+    function drawCircles(l, x, y, scale, fill) {
+        var j, PI_SQ = Math.PI * 2;
+        for (j = 0; j < l.length; j += 1) {
+            var cel = document.createElementNS("http://www.w3.org/2000/svg", "circle")
+            var cx = x + (l[j].x * scale);
+            var cy = y + (l[j].y * scale);
+            cel.setAttribute('cx',cx);
+            cel.setAttribute('cy',cy);
+            cel.setAttribute('r', 2);
+            if(fill) {
+                cel.setAttribute('fill',fill);
+            }
+            //ctx.arc(cx, cy, 2, 0, PI_SQ, false);
+            parent.appendChild(cel);
+        }
+    }
+
+    var scale, i, blueCircles, redCircles, path, cmd;
+    x = x !== undefined ? x : 0;
+    y = y !== undefined ? y : 0;
+    fontSize = fontSize !== undefined ? fontSize : 24;
+    scale = 1 / this.font.unitsPerEm * fontSize;
+
+    blueCircles = [];
+    redCircles = [];
+    path = this.path;
+    for (i = 0; i < path.commands.length; i += 1) {
+        cmd = path.commands[i];
+        if (cmd.x !== undefined) {
+            blueCircles.push({x: cmd.x, y: -cmd.y});
+        }
+        if (cmd.x1 !== undefined) {
+            redCircles.push({x: cmd.x1, y: -cmd.y1});
+        }
+        if (cmd.x2 !== undefined) {
+            redCircles.push({x: cmd.x2, y: -cmd.y2});
+        }
+    }
+
+    drawCircles(blueCircles, x, y, scale, 'blue');
+    drawCircles(redCircles, x, y, scale, 'red');
+};
+
+// Draw lines indicating important font measurements.
+// Black lines indicate the origin of the coordinate system (point 0,0).
+// Blue lines indicate the glyph bounding box.
+// Green line indicates the advance width of the glyph.
+//
+// parent - SVG container element.
+// x - Horizontal position of the glyph. (default: 0)
+// y - Vertical position of the *baseline* of the glyph. (default: 0)
+// fontSize - Font size, in pixels (default: 72).
+Glyph.prototype.drawMetricsSVG = function (parent, x, y, fontSize) {
+    function drawline (x1, y1, x2, y2, stroke) {
+        var lel = document.createElementNS("http://www.w3.org/2000/svg", 'line');
+        lel.setAttribute('x1',x1);
+        lel.setAttribute('y1',y1);
+        lel.setAttribute('x2',x2);
+        lel.setAttribute('y2',y2);
+        lel.setAttribute('stroke',stroke)
+        parent.appendChild(lel);
+    }
+
+    var scale;
+    x = x !== undefined ? x : 0;
+    y = y !== undefined ? y : 0;
+    fontSize = fontSize !== undefined ? fontSize : 24;
+    scale = 1 / this.font.unitsPerEm * fontSize;
+
+    // Draw the origin
+    drawline(x, -10000, x, 10000,'black');
+    drawline(-10000, y, 10000, y, 'black');
+
+    // Draw the glyph box
+    drawline(x + (this.xMin * scale), -10000, x + (this.xMin * scale), 10000, 'blue');
+    drawline(x + (this.xMax * scale), -10000, x + (this.xMax * scale), 10000, 'blue');
+    drawline(-10000, y + (-this.yMin * scale), 10000, y + (-this.yMin * scale), 'blue');
+    drawline(-10000, y + (-this.yMax * scale), 10000, y + (-this.yMax * scale), 'blue');
+
+    // Draw the advance width
+    drawline(x + (this.advanceWidth * scale), -10000, x + (this.advanceWidth * scale), 10000, 'green');
+};
+
 exports.Glyph = Glyph;

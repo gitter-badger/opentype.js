@@ -263,4 +263,52 @@ Font.prototype.download = function () {
     });
 };
 
+// Draw the text on the given SVG container element.
+//
+// parent - SVG container element (<SVG> or <G>) to add path to. 
+// text - The text to create.
+// x - Horizontal position of the beginning of the text. (default: 0)
+// y - Vertical position of the *baseline* of the text. (default: 0)
+// fontSize - Font size in pixels. We scale the glyph units by `1 / unitsPerEm * fontSize`. (default: 72)
+// Options is an optional object that contains:
+// - kerning - Whether to take kerning information into account. (default: true)
+Font.prototype.drawSVG = function (parent, text, x, y, fontSize, options) {
+    return this.getPath(text, x, y, fontSize, options).drawSVG(parent);
+};
+
+// Draw the points of all glyphs in the text.
+// On-curve points will be drawn in blue, off-curve points will be drawn in red.
+//
+// parent - SVG container element.
+// text - The text to create.
+// x - Horizontal position of the beginning of the text. (default: 0)
+// y - Vertical position of the *baseline* of the text. (default: 0)
+// fontSize - Font size in pixels. We scale the glyph units by `1 / unitsPerEm * fontSize`. (default: 72)
+// Options is an optional object that contains:
+// - kerning - Whether to take kerning information into account. (default: true)
+Font.prototype.drawPointsSVG = function (parent, text, x, y, fontSize, options) {
+    this.forEachGlyph(text, x, y, fontSize, options, function (glyph, x, y, fontSize) {
+        glyph.drawPointsSVG(parent, x, y, fontSize);
+    });
+};
+
+// Draw lines indicating important font measurements for all glyphs in the text.
+// Black lines indicate the origin of the coordinate system (point 0,0).
+// Blue lines indicate the glyph bounding box.
+// Green line indicates the advance width of the glyph.
+//
+// parent - SVG container element.
+// text - The text to create.
+// x - Horizontal position of the beginning of the text. (default: 0)
+// y - Vertical position of the *baseline* of the text. (default: 0)
+// fontSize - Font size in pixels. We scale the glyph units by `1 / unitsPerEm * fontSize`. (default: 72)
+// Options is an optional object that contains:
+// - kerning - Whether to take kerning information into account. (default: true)
+Font.prototype.drawMetricsSVG = function (parent, text, x, y, fontSize, options) {
+    this.forEachGlyph(text, x, y, fontSize, options, function (glyph, x, y, fontSize) {
+        glyph.drawMetricsSVG(parent, x, y, fontSize);
+    });
+};
+
+
 exports.Font = Font;
